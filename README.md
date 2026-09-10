@@ -1,2 +1,623 @@
+[index.html](https://github.com/user-attachments/files/32047720/index.html)
 # vonguyenhaidang.github.io
 Gacha Webpage
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mâm Việt // Food Gacha</title>
+<style>
+  :root{
+    --void:#0a0e14;
+    --panel:#111823;
+    --panel-raised:#161f2c;
+    --line: #232e3d;
+    --text:#e8edf5;
+    --dim:#6b7684;
+    --amber:#f0a020;
+    --amber-dim:#8a6521;
+
+    /* Rarity tiers — authentic drop-rate structure, edit CASES config below to reskin */
+    --r-milspec:#4b69ff;
+    --r-restricted:#8847ff;
+    --r-classified:#d32ce6;
+    --r-covert:#eb4b4b;
+    --r-rare:#ffd700;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(ellipse 900px 500px at 50% -10%, #1a2433 0%, transparent 60%),
+      var(--void);
+    color:var(--text);
+    font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:32px 16px 64px;
+  }
+
+  /* ---------- Header ---------- */
+  .topbar{
+    width:100%;
+    max-width:980px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:14px 20px;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:10px;
+    margin-bottom:22px;
+  }
+  .brand{
+    display:flex;
+    align-items:baseline;
+    gap:10px;
+  }
+  .brand-mark{
+    font-weight:800;
+    font-size:20px;
+    letter-spacing:-0.02em;
+  }
+  .brand-sub{
+    font-size:11px;
+    color:var(--dim);
+    font-family: "Courier New", monospace;
+    letter-spacing:0.04em;
+  }
+
+  /* ---------- Reel ---------- */
+  .reel-wrap{
+    width:100%;
+    max-width:980px;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:20px;
+    position:relative;
+  }
+  .reel-viewport{
+    position:relative;
+    height:150px;
+    overflow:hidden;
+    border-radius:8px;
+    background:var(--void);
+    border:1px solid var(--line);
+  }
+  .reel-viewport::before, .reel-viewport::after{
+    content:"";
+    position:absolute;
+    top:0; bottom:0;
+    width:80px;
+    z-index:3;
+    pointer-events:none;
+  }
+  .reel-viewport::before{
+    left:0;
+    background:linear-gradient(90deg, var(--void) 0%, transparent 100%);
+  }
+  .reel-viewport::after{
+    right:0;
+    background:linear-gradient(270deg, var(--void) 0%, transparent 100%);
+  }
+  .pointer{
+    position:absolute;
+    top:0; bottom:0;
+    left:50%;
+    width:3px;
+    background:var(--amber);
+    box-shadow:0 0 10px var(--amber), 0 0 24px rgba(240,160,32,0.5);
+    z-index:4;
+    transform:translateX(-50%);
+  }
+  .pointer::before, .pointer::after{
+    content:"";
+    position:absolute;
+    left:50%;
+    transform:translateX(-50%);
+    border:7px solid transparent;
+  }
+  .pointer::before{ top:-1px; border-top:9px solid var(--amber); }
+  .pointer::after{ bottom:-1px; border-bottom:9px solid var(--amber); }
+
+  .reel-strip{
+    position:absolute;
+    top:0; left:0; bottom:0;
+    display:flex;
+    align-items:center;
+    will-change:transform;
+  }
+  .reel-item{
+    flex:0 0 auto;
+    width:120px;
+    height:120px;
+    margin:0 6px;
+    border-radius:6px;
+    background:var(--panel-raised);
+    border:1px solid var(--line);
+    border-bottom:4px solid var(--rc, var(--dim));
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    box-shadow: inset 0 0 24px rgba(0,0,0,0.4);
+  }
+  .reel-item .nm{font-size:10px; color:var(--dim); text-align:center; padding:0 6px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; width:100%;}
+
+  /* ---------- Image placeholders ---------- */
+  .ico-wrap{position:relative; flex-shrink:0;}
+  .ico-wrap img{display:block; width:100%; height:100%; object-fit:cover; border-radius:6px;}
+  .ico-wrap .ico-placeholder{
+    display:none;
+    position:absolute; top:0; left:0;
+    width:100%; height:100%;
+    flex-direction:column; align-items:center; justify-content:center;
+    gap:3px;
+    background:var(--panel-raised);
+    border:1px dashed #3a4658;
+    border-radius:6px;
+    color:var(--dim);
+  }
+  .ico-placeholder-label{
+    font-size:7px;
+    font-family:"Courier New",monospace;
+    letter-spacing:0.01em;
+    padding:0 4px;
+    text-align:center;
+    word-break:break-all;
+    line-height:1.2;
+  }
+  .ico-lg{width:64px; height:64px;}
+  .ico-sm{width:40px; height:40px;}
+  .ico-xl{width:56px; height:56px;}
+
+  .open-row{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:14px;
+    margin-top:18px;
+  }
+  .open-btn{
+    background:linear-gradient(180deg, #ffbf47, var(--amber));
+    color:#1a1200;
+    border:none;
+    font-weight:800;
+    font-size:15px;
+    letter-spacing:0.01em;
+    padding:14px 34px;
+    border-radius:8px;
+    cursor:pointer;
+    font-family:inherit;
+    box-shadow:0 4px 0 var(--amber-dim);
+    transition:transform .08s ease;
+  }
+  .open-btn:active{transform:translateY(2px); box-shadow:0 2px 0 var(--amber-dim);}
+  .open-btn:disabled{
+    background:#3a3f47; color:#7a8290; box-shadow:none; cursor:not-allowed;
+  }
+  .mute-btn{
+    background:var(--panel-raised);
+    border:1px solid var(--line);
+    color:var(--dim);
+    width:44px; height:44px;
+    border-radius:8px;
+    cursor:pointer;
+    font-size:16px;
+  }
+
+  /* ---------- Result ---------- */
+  .result{
+    max-width:980px; width:100%;
+    margin-top:18px;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    gap:16px;
+    padding:16px;
+    border-radius:10px;
+    background:var(--panel);
+    border:1px solid var(--line);
+  }
+  .result.show{display:flex; animation:pop .25s ease;}
+  @keyframes pop{ from{transform:scale(.9); opacity:0;} to{transform:scale(1); opacity:1;} }
+  .result .info b{display:block; font-size:15px;}
+
+  /* ---------- Odds ---------- */
+  .odds{
+    width:100%; max-width:980px;
+    margin-top:26px;
+  }
+  .odds summary{
+    cursor:pointer;
+    font-size:13px;
+    color:var(--dim);
+    padding:8px 0;
+    user-select:none;
+  }
+  .odds-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(220px, 1fr));
+    gap:8px;
+    margin-top:10px;
+  }
+  .odds-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-left:3px solid var(--rc, var(--dim));
+    border-radius:6px;
+    padding:8px 12px;
+    font-size:12px;
+  }
+  .odds-row .pct{font-family:"Courier New",monospace; color:var(--dim);}
+
+  /* ---------- Inventory ---------- */
+  .inventory{
+    width:100%; max-width:980px;
+    margin-top:26px;
+  }
+  .inventory h2{
+    font-size:13px;
+    color:var(--dim);
+    font-weight:600;
+    letter-spacing:0.02em;
+    margin-bottom:12px;
+  }
+  .inv-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(110px, 1fr));
+    gap:10px;
+  }
+  .inv-item{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-bottom:3px solid var(--rc, var(--dim));
+    border-radius:8px;
+    padding:12px 8px;
+    text-align:center;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:6px;
+  }
+  .inv-item .nm{font-size:10px; color:var(--text); line-height:1.3;}
+  .inv-empty{color:var(--dim); font-size:12px;}
+
+  @media (prefers-reduced-motion: reduce){
+    .reel-strip{transition:none !important;}
+  }
+</style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark">MÂM VIỆT</div>
+      <div class="brand-sub">FOOD&nbsp;GACHA</div>
+    </div>
+  </div>
+
+  <div class="reel-wrap">
+    <div class="reel-viewport" id="reelViewport">
+      <div class="pointer"></div>
+      <div class="reel-strip" id="reelStrip"></div>
+    </div>
+    <div class="open-row">
+      <button class="open-btn" id="openBtn">OPEN CASE</button>
+      <button class="mute-btn" id="muteBtn" title="Toggle sound">🔊</button>
+    </div>
+  </div>
+
+  <div class="result" id="result">
+    <div class="ico" id="resultIco"></div>
+    <div class="info">
+      <b id="resultName"></b>
+    </div>
+  </div>
+
+  <details class="odds">
+    <summary>Drop rates for this case</summary>
+    <div class="odds-grid" id="oddsGrid"></div>
+  </details>
+
+  <div class="inventory">
+    <h2>INVENTORY</h2>
+    <div class="inv-grid" id="invGrid"></div>
+  </div>
+
+<script>
+/* =========================================================================
+   CONFIG — this is the only section you need to touch to reskin the game.
+   ========================================================================= */
+
+// Tier drop rates. These percentages must sum to 100.
+// (Defaults mirror a standard 5-tier case-opening structure.)
+const RARITIES = [
+  { key:"milspec",    label:"Mil-Spec",     color:"var(--r-milspec)",    weight:79.92 },
+  { key:"restricted", label:"Restricted",   color:"var(--r-restricted)", weight:15.98 },
+  { key:"classified", label:"Classified",   color:"var(--r-classified)", weight:3.20  },
+  { key:"covert",     label:"Covert",       color:"var(--r-covert)",     weight:0.64  },
+  { key:"rare",       label:"Rare Special", color:"var(--r-rare)",       weight:0.26  },
+];
+
+// Cases. Each item just needs: name, rarity (a RARITIES key). No icon field —
+// the item's photo is looked up automatically from its name, see IMAGE_DIR below.
+const CASES = [
+  {
+    id:"mam-viet",
+    name:"Mâm Việt",
+    items:[
+      { name:"Bánh Mì",         rarity:"milspec" },
+      { name:"Phở Gà",          rarity:"milspec" },
+      { name:"Bún Chả",         rarity:"milspec" },
+      { name:"Gỏi Cuốn",        rarity:"milspec" },
+      { name:"Cơm Tấm",         rarity:"milspec" },
+      { name:"Xôi Gấc",         rarity:"milspec" },
+      { name:"Nem Nướng",       rarity:"milspec" },
+      { name:"Bánh Bèo",        rarity:"milspec" },
+      { name:"Bánh Xèo",        rarity:"restricted" },
+      { name:"Bún Bò Huế",      rarity:"restricted" },
+      { name:"Chả Cá Lã Vọng",  rarity:"restricted" },
+      { name:"Bún Riêu",        rarity:"restricted" },
+      { name:"Bò Né",           rarity:"restricted" },
+      { name:"Mì Quảng",        rarity:"classified" },
+      { name:"Cao Lầu",         rarity:"classified" },
+      { name:"Bánh Khọt",       rarity:"classified" },
+      { name:"Lẩu Cá Kèo",      rarity:"classified" },
+      { name:"Chả Giò",         rarity:"covert" },
+      { name:"Gỏi Gà Lá Chanh", rarity:"covert" },
+      { name:"Bánh Chưng",      rarity:"rare" },
+      { name:"Cua Rang Muối",   rarity:"rare" },
+    ],
+  },
+];
+
+// Where item photos live, relative to this HTML file. Drop an image named after
+// each item (see the filename hint shown on any placeholder in the page) into
+// this folder — e.g. images/banh-mi.jpg for "Bánh Mì". Any dish without a photo
+// yet just shows a dashed placeholder with the exact filename it's expecting.
+const IMAGE_DIR = "images/";
+
+/* =========================================================================
+   ENGINE — shouldn't need to touch below this line.
+   ========================================================================= */
+
+let inventory = [];
+let spinning = false;
+let soundOn = true;
+let audioCtx = null;
+
+const rarityMap = Object.fromEntries(RARITIES.map(r => [r.key, r]));
+const activeCase = () => CASES[0];
+
+function itemsByRarity(caseObj){
+  const grouped = {};
+  caseObj.items.forEach(it => {
+    (grouped[it.rarity] = grouped[it.rarity] || []).push(it);
+  });
+  return grouped;
+}
+
+// Weighted pick: choose a rarity tier by its configured weight, then choose
+// uniformly among that case's items in that tier.
+function rollItem(caseObj){
+  const grouped = itemsByRarity(caseObj);
+  const availableTiers = RARITIES.filter(r => grouped[r.key] && grouped[r.key].length);
+  const totalWeight = availableTiers.reduce((s, r) => s + r.weight, 0);
+  let roll = Math.random() * totalWeight;
+  let chosenTier = availableTiers[availableTiers.length - 1];
+  for (const tier of availableTiers){
+    if (roll < tier.weight){ chosenTier = tier; break; }
+    roll -= tier.weight;
+  }
+  const pool = grouped[chosenTier.key];
+  const item = pool[Math.floor(Math.random() * pool.length)];
+  return { ...item };
+}
+
+/* ---------- image placeholders ---------- */
+
+// Turns "Bánh Mì" into "banh-mi" so it maps predictably to an image filename.
+function slugify(str){
+  return str
+    .replace(/đ/g, "d").replace(/Đ/g, "D")
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+const PLACEHOLDER_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="40%" height="40%">
+  <rect x="3" y="3" width="18" height="18" rx="2"/>
+  <circle cx="8.5" cy="8.5" r="1.5"/>
+  <path d="M21 15l-5-5L5 21"/>
+</svg>`;
+
+// Builds an <img> with a dashed placeholder fallback showing the expected
+// filename, so a missing photo is easy to spot and fill in.
+function iconMarkup(item, sizeClass){
+  const filename = slugify(item.name) + ".jpg";
+  return `<div class="ico-wrap ${sizeClass}">
+    <img src="${IMAGE_DIR}${filename}" alt="${item.name}"
+         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+    <div class="ico-placeholder">${PLACEHOLDER_SVG}<span class="ico-placeholder-label">${filename}</span></div>
+  </div>`;
+}
+
+/* ---------- rendering ---------- */
+
+function renderOdds(){
+  const grid = document.getElementById("oddsGrid");
+  const caseObj = activeCase();
+  const grouped = itemsByRarity(caseObj);
+  grid.innerHTML = "";
+  RARITIES.forEach(tier => {
+    const pool = grouped[tier.key];
+    if (!pool || !pool.length) return;
+    const perItem = tier.weight / pool.length;
+    pool.forEach(it => {
+      const row = document.createElement("div");
+      row.className = "odds-row";
+      row.style.setProperty("--rc", tier.color);
+      row.innerHTML = `<span>${it.name}</span><span class="pct">${perItem.toFixed(3)}%</span>`;
+      grid.appendChild(row);
+    });
+  });
+}
+
+function renderReelItem(item){
+  const el = document.createElement("div");
+  el.className = "reel-item";
+  el.style.setProperty("--rc", rarityMap[item.rarity].color);
+  el.innerHTML = `${iconMarkup(item, "ico-lg")}<div class="nm">${item.name}</div>`;
+  return el;
+}
+
+function renderInventory(){
+  const grid = document.getElementById("invGrid");
+  grid.innerHTML = "";
+  if (!inventory.length){
+    grid.innerHTML = `<div class="inv-empty">No items yet — open a case to start your collection.</div>`;
+    return;
+  }
+  inventory.forEach((item) => {
+    const el = document.createElement("div");
+    el.className = "inv-item";
+    el.style.setProperty("--rc", rarityMap[item.rarity].color);
+    el.innerHTML = `
+      ${iconMarkup(item, "ico-sm")}
+      <div class="nm">${item.name}</div>`;
+    grid.appendChild(el);
+  });
+}
+
+/* ---------- sound (procedural, no external assets) ---------- */
+
+function ensureAudio(){
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+function tick(freq = 700, dur = 0.03, gain = 0.05){
+  if (!soundOn) return;
+  ensureAudio();
+  const osc = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  osc.frequency.value = freq;
+  osc.type = "square";
+  g.gain.value = gain;
+  osc.connect(g).connect(audioCtx.destination);
+  osc.start();
+  g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + dur);
+  osc.stop(audioCtx.currentTime + dur);
+}
+function winSound(rarity){
+  if (!soundOn) return;
+  const pitches = { milspec:520, restricted:620, classified:740, covert:880, rare:1046 };
+  ensureAudio();
+  [0, 0.09, 0.18].forEach((t, i) => {
+    setTimeout(() => tick(pitches[rarity] * (1 + i * 0.25), 0.12, 0.07), t * 1000);
+  });
+}
+
+/* ---------- spin logic ---------- */
+
+const ITEM_WIDTH = 132; // reel-item width (120) + margins (6+6)
+const SPIN_MS = 6000;   // must match the transition duration set below
+
+function openCase(){
+  if (spinning) return;
+  const caseObj = activeCase();
+  spinning = true;
+  document.getElementById("openBtn").disabled = true;
+  document.getElementById("result").classList.remove("show");
+
+  const winner = rollItem(caseObj);
+
+  // Reset to a neutral starting position before building the new strip —
+  // otherwise, since the winner always lands at the same fixed index, each
+  // spin after the first would already be sitting near its target and barely
+  // appear to move.
+  const REEL_LENGTH = 60;
+  const WINNER_INDEX = 52;
+  const strip = document.getElementById("reelStrip");
+  strip.style.transition = "none";
+  strip.style.transform = "translateX(0px)";
+  strip.innerHTML = "";
+
+  const frag = document.createDocumentFragment();
+  for (let i = 0; i < REEL_LENGTH; i++){
+    const it = (i === WINNER_INDEX) ? winner : rollItem(caseObj);
+    frag.appendChild(renderReelItem(it));
+  }
+  strip.appendChild(frag);
+
+  // Center the viewport on WINNER_INDEX, with a small random offset within
+  // the item so it doesn't always land dead-center (feels less mechanical).
+  const viewport = document.getElementById("reelViewport");
+  const viewportCenter = viewport.clientWidth / 2;
+  const randomOffset = (Math.random() - 0.5) * (ITEM_WIDTH * 0.5);
+  const targetX = -(WINNER_INDEX * ITEM_WIDTH + ITEM_WIDTH / 2 - viewportCenter) + randomOffset;
+
+  // Force reflow so the transition below reliably triggers.
+  strip.getBoundingClientRect();
+
+  strip.style.transition = `transform ${SPIN_MS / 1000}s cubic-bezier(0.12, 0.72, 0.14, 1)`;
+  strip.style.transform = `translateX(${targetX}px)`;
+
+  // Ticking sound synced to travel, denser at the start, sparser near the end.
+  let elapsed = 0;
+  const totalDuration = SPIN_MS;
+  function scheduleTicks(){
+    const progress = elapsed / totalDuration;
+    const interval = 40 + progress * progress * 260; // accelerating gap
+    if (elapsed < totalDuration - 200){
+      tick(500, 0.02, 0.035);
+      elapsed += interval;
+      setTimeout(scheduleTicks, interval);
+    }
+  }
+  scheduleTicks();
+
+  // A timer (not transitionend) drives completion: transitionend never fires
+  // when the browser has "reduce motion" enabled, since that setting forces
+  // transition:none — using a timer means the spin always resolves either way.
+  setTimeout(() => finishSpin(winner), SPIN_MS + 50);
+}
+
+function finishSpin(winner){
+  spinning = false;
+  document.getElementById("openBtn").disabled = false;
+  inventory.unshift(winner);
+  renderInventory();
+
+  const tier = rarityMap[winner.rarity];
+  document.getElementById("resultIco").innerHTML = iconMarkup(winner, "ico-xl");
+  const nameEl = document.getElementById("resultName");
+  nameEl.textContent = winner.name;
+  nameEl.style.color = tier.color;
+  document.getElementById("result").classList.add("show");
+
+  winSound(winner.rarity);
+}
+
+/* ---------- wire up ---------- */
+
+document.getElementById("openBtn").addEventListener("click", openCase);
+document.getElementById("muteBtn").addEventListener("click", (e) => {
+  soundOn = !soundOn;
+  e.target.textContent = soundOn ? "🔊" : "🔇";
+});
+
+renderOdds();
+renderInventory();
+</script>
+</body>
+</html>
