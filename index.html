@@ -442,7 +442,7 @@ const PLACEHOLDER_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentCol
 // Builds an <img> with a dashed placeholder fallback showing the expected
 // filename, so a missing photo is easy to spot and fill in.
 function iconMarkup(item, sizeClass){
-  const filename = slugify(item.name) + ".jpg";
+  const filename = slugify(item.name) + ".png";
   return `<div class="ico-wrap ${sizeClass}">
     <img src="${IMAGE_DIR}${filename}" alt="${item.name}"
          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
